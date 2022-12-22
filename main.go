@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	_ "github.com/ethereum/go-ethereum"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 )
 
 /*
-curl https://mainnet.infura.io/v3/086d385e5266474fac356d54920e1e60 \
+curl https://eth-mainnet.g.alchemy.com/v2/GrAWOBLihNvOotLnNfM2P-ygl8lRj_SK \
     -X POST \
     -H "Content-Type: application/json" \
     -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params": [],"id":1}'
@@ -36,6 +35,7 @@ func runTest(provider NodeProvider, call RPCCall) {
 
 	key := provider.Key
 	log.Println("key:", key)
+	log.Println("json:", string(byt))
 
 	for _, url := range provider.Urls {
 		request, error := http.NewRequest("POST", fmt.Sprintf("%s/%s", url, key), bytes.NewBuffer(byt))
@@ -47,17 +47,24 @@ func runTest(provider NodeProvider, call RPCCall) {
 		client := &http.Client{}
 		response, error := client.Do(request)
 		if error != nil {
-			panic(error)
+			//panic(error)
 		}
 		defer response.Body.Close()
 
 		// end time
 		duration := time.Since(startTime)
 
-		body, _ := ioutil.ReadAll(response.Body)
+		//body, _ := ioutil.ReadAll(response.Body)
+		if response.StatusCode == 200 {
+			log.Println(url)
+			log.Println(duration)
+			log.Println(duration.Nanoseconds())
+		}
+		/*log.Println(url)
 		fmt.Println("R:", string(body))
+		log.Println(response.StatusCode)
 		log.Println(duration)
-		log.Println(duration.Nanoseconds())
+		log.Println(duration.Nanoseconds())*/
 	}
 }
 
@@ -76,12 +83,24 @@ func main() {
 			"https://celo-mainnet.infura.io/v3",
 		},
 	}
+
+	alchemy := NodeProvider{
+		Name: "Alchemy",
+		Key:  "GrAWOBLihNvOotLnNfM2P-ygl8lRj_SK",
+		Urls: []string{
+			"https://eth-mainnet.g.alchemy.com/v2",
+		},
+	}
+
 	call := RPCCall{
 		JsonRpc: "2.0",
 		Method:  "eth_blockNumber",
 		Params:  []string{},
 		Id:      1,
 	}
+
 	log.Println("infura", infura)
+	log.Println("alchemy", infura)
 	runTest(infura, call)
+	runTest(alchemy, call)
 }
